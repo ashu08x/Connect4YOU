@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* Popup form styles */
     .popup-form {
       display: none;
       position: fixed;
@@ -30,7 +29,7 @@
       margin-bottom: 15px;
       text-align: center;
     }
-    .form-container input {
+    .form-container input, .form-container select {
       width: 100%;
       padding: 10px;
       margin: 8px 0;
@@ -51,10 +50,7 @@
       background: #dc3545;
       margin-top: 10px;
     }
-    #formMessage {
-      margin-top: 10px;
-      text-align: center;
-    }
+    #formMessage { margin-top: 10px; text-align:center; }
   </style>
 </head>
 <body>
@@ -70,16 +66,13 @@
 
   <section class="hero">
     <h2>All Businesses</h2>
-    <p>Discover and support local businesses in Daudnagar 🚀</p>
+    <p>Discover and support local businesses 🚀</p>
   </section>
 
   <section class="business-section">
-    <div class="cards" id="business-list">
-      <!-- Businesses will load dynamically from Firestore -->
-    </div>
+    <div class="cards" id="business-list"></div>
   </section>
 
-  <!-- CTA Button -->
   <div class="cta">
     <a href="#" id="openForm">Submit Your Business ➕</a>
   </div>
@@ -95,6 +88,18 @@
         <input type="email" id="email" placeholder="Email" required>
         <input type="text" id="phone" placeholder="Phone Number" required>
         <input type="url" id="image" placeholder="Image URL (optional)">
+        <select id="state" required>
+          <option value="">Select State</option>
+          <option value="Bihar">Bihar</option>
+        </select>
+        <select id="district" required>
+          <option value="">Select District</option>
+          <option value="Aurangabad">Aurangabad</option>
+        </select>
+        <select id="city" required>
+          <option value="">Select City</option>
+          <option value="Daudnagar">Daudnagar</option>
+        </select>
         <button type="submit">Submit</button>
       </form>
       <button class="close-btn" onclick="closeForm()">Close</button>
@@ -106,7 +111,6 @@
     <p>© 2025 Connect4YOU | All Rights Reserved</p>
   </footer>
 
-  <!-- Firebase + JS -->
   <script type="module">
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -123,7 +127,7 @@
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
     const db = getFirestore(app);
 
-    // Load businesses dynamically
+    // Load businesses
     async function loadBusinesses() {
       const list = document.getElementById("business-list");
       list.innerHTML = "";
@@ -135,28 +139,24 @@
             <img src="${data.image || 'https://dummyimage.com/200x120/ccc/000.png&text=Business'}" alt="Business">
             <h4>${data.businessName}</h4>
             <p>${data.category}</p>
+            <p>${data.city}, ${data.district}, ${data.state}</p>
           </div>
         `;
       });
     }
     loadBusinesses();
 
-    // Open popup form
-    document.getElementById("openForm").addEventListener("click", (e) => {
+    document.getElementById("openForm").addEventListener("click", e => {
       e.preventDefault();
       document.getElementById("popupForm").style.display = "flex";
     });
-
-    function closeForm() {
-      document.getElementById("popupForm").style.display = "none";
-    }
+    function closeForm(){ document.getElementById("popupForm").style.display = "none"; }
     window.closeForm = closeForm;
 
-    // Handle form submission
     const form = document.getElementById("businessForm");
     const message = document.getElementById("formMessage");
 
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", async e => {
       e.preventDefault();
       const businessName = document.getElementById("businessName").value.trim();
       const category = document.getElementById("category").value.trim();
@@ -164,24 +164,27 @@
       const email = document.getElementById("email").value.trim();
       const phone = document.getElementById("phone").value.trim();
       const image = document.getElementById("image").value.trim();
+      const state = document.getElementById("state").value;
+      const district = document.getElementById("district").value;
+      const city = document.getElementById("city").value;
 
-      if (!businessName || !category || !ownerName || !email || !phone) {
+      if (!businessName || !category || !ownerName || !email || !phone || !state || !district || !city) {
         message.innerText = "❌ Please fill all required fields!";
         message.style.color = "red";
         return;
       }
 
       try {
-        await addDoc(collection(db, "businesses"), { businessName, category, ownerName, email, phone, image, timestamp: new Date() });
+        await addDoc(collection(db, "businesses"), { businessName, category, ownerName, email, phone, image, state, district, city, timestamp: new Date() });
         message.innerText = "✅ Business submitted successfully!";
         message.style.color = "green";
         form.reset();
         closeForm();
         loadBusinesses();
-      } catch (err) {
-        message.innerText = "❌ Error saving business!";
-        message.style.color = "red";
+      } catch(err){
         console.error(err);
+        message.innerText = "❌ Error submitting business!";
+        message.style.color = "red";
       }
     });
   </script>
